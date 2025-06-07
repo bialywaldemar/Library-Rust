@@ -1,3 +1,4 @@
+
 // src\book.rs
 
 use rand::Rng;

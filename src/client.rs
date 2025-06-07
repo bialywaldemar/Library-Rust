@@ -1,18 +1,23 @@
+
 // src\client.rs
 
 use crate::book::Book;
 use rand::Rng;
+use std::sync::atomic::{AtomicI32, Ordering};
+
+static CLIENT_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 #[derive(Debug, Clone)]
 pub struct Client {
     pub id : i32,
     pub name : String,
-    pub books_curr_borrowed : Vec<Book>,
+    pub books_curr_borrowed : Vec<i32>,
     pub books_borrowed_num : i32,
 }
 
 impl Client {
-    pub fn new(id: i32, name: String) -> Self {
+    pub fn new(name: String) -> Self {
+        let id = CLIENT_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
         Self {
             id,
             name,
@@ -21,51 +26,37 @@ impl Client {
         }
     }
 
-    pub fn borrow_book(&mut self, book: &mut Book) {
-        if book.is_borrowed {
-            println!("Nie można wypożyczyć, książka {} już wypożyczona.", book.title);
-            return;
-        }
-
-        book.is_borrowed = true;
-        self.books_curr_borrowed.push(book.clone());
+    pub fn borrow_book(&mut self, book_id: i32) {
+        self.books_curr_borrowed.push(book_id);
         self.books_borrowed_num += 1;
-        println!("Wypożyczono książkę {}.", book.title);
-        }
+    }
 
-    pub fn return_book(&mut self, book_id: i32) {
-        if let Some(index) = self.books_curr_borrowed.iter().position(|b| b.id == book_id) {
-            self.books_curr_borrowed[index].is_borrowed = false;
-            let book = self.books_curr_borrowed.remove(index);
-            println!("Zwrócono książkę {}.", book.title);
+    pub fn return_book(&mut self, book_id: i32) -> bool {
+        if let Some(pos) = self.books_curr_borrowed.iter().position(|&id| id == book_id) {
+            self.books_curr_borrowed.remove(pos);
+            self.books_borrowed_num -= 1;
+            true
         } else {
-            println!("Książka nieznaleziona w wypożyczeniach.");
+            false
         }
 
     }
 
-    pub fn return_random_book(&mut self) {
+    pub fn return_random_book(&mut self) -> Option<i32>{
+        if self.books_curr_borrowed.is_empty() {
+            return None;
+        }
         let mut rng = rand::thread_rng();
-        let n = self.books_curr_borrowed.len();
-        if n == 0 {
-            return
-        }
-        let index = rng.gen_range(0..n);
-        self.books_curr_borrowed[index].is_borrowed = false;
-        self.books_curr_borrowed.remove(index);
+        let idx = rng.gen_range(0..self.books_curr_borrowed.len());
+        Some(self.books_curr_borrowed.remove(idx))
     }
 
-    pub fn return_all_books(&mut self) {
-        for book in self.books_curr_borrowed.iter_mut() {
-            book.is_borrowed = false;
-        }
+    pub fn return_all_books(&mut self) -> Vec<i32> {
+        let returned = self.books_curr_borrowed.clone();
         self.books_curr_borrowed.clear();
-        println!("Zwrócono wszystkie książki.");
+        self.books_borrowed_num = 0;
+        returned
     }
 
-    pub fn list_borrowed_books(&self) {
-        for book in self.books_curr_borrowed.iter() {
-            println!("{}, {}", book.title, book.author);
-        }
-    }
+    
 }
