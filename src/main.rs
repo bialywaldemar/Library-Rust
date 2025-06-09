@@ -27,13 +27,53 @@ fn main() -> std::io::Result<()> {
     
     lib.add_clients(vec![Client::new("Juliusz Cezar".to_string())]);
     lib.add_clients_from_file()?;
-    
-    // Borrow books using the safe method
-    lib.borrow_book(client1_id, 1);
-    lib.borrow_book(client1_id, 6);
-    lib.print_client_books(client1_id);
 
-    lib.return_book(client1_id, 6);
-    lib.print_client_books(client1_id);
+    // Simulate 30 days with:
+    // - 40% chance to borrow
+    // - 30% chance to return one
+    // - 10% chance to return all
+    // - 20% chance to do nothing
+    lib.simulate(30, 0.2, 0.2, 0.1);
+        
+    // Borrow books using the safe method
+    // if let Err(e) = lib.borrow_book(client1_id, 1) {
+    //     eprintln!("Borrow error: {}", e);
+    // }
+    // if let Err(e) = lib.borrow_book(client1_id, 6) {
+    //     eprintln!("Borrow error: {}", e);
+    // }
+    // lib.print_client_books(client1_id);
+
+    // if let Err(e) = lib.return_book(client1_id, 6) {
+    //     eprintln!("Return error: {}", e);
+    // }
+    // lib.print_client_books(client1_id);
+
+    // // Store the chosen book ID outside the if-let scope
+    // let mut book_chosen = None;
+    // if let Some(book_id) = lib.choose_book() {
+    //     book_chosen = Some(book_id);
+    //     if let Err(e) = lib.borrow_book(client1_id, book_id) {
+    //         eprintln!("Borrow error: {}", e);
+    //     }
+    // } else {
+    //     eprintln!("No available books to choose");
+    // }
+
+    // // Additional borrows with error handling
+    // if let Err(e) = lib.borrow_book(client1_id, 9) {
+    //     eprintln!("Borrow error: {}", e);
+    // }
+    // if let Err(e) = lib.borrow_book(client1_id, 2) {
+    //     eprintln!("Borrow error: {}", e);
+    // }
+
+    // lib.print_client_books(client1_id);
+    
+    // if let Err(e) = lib.return_all_books(client1_id) {
+    //     eprintln!("Return all error: {}", e);
+    // }
+    // lib.print_client_books(client1_id);
+    
     Ok(())
 }
